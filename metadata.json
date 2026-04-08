@@ -1,0 +1,6 @@
+{
+  "name": "Military Recon Dashboard",
+  "description": "High-performance reconnaissance image analysis using OpenCV.js. Classical CV pipeline for real-time asset isolation and tactical analysis.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
