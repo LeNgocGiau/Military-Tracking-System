@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, ScanFace, QrCode } from 'lucide-react';
+import { FaceScanner } from './FaceScanner';
+import { QRScanner } from './QRScanner';
 
 interface LoginProps {
   onLogin: (username: string) => void;
@@ -10,6 +12,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +22,31 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       localStorage.setItem('username', username);
       onLogin(username);
     } else {
-      setError('Invalid credentials. Please use the provided tactical access codes.');
+      setError('Thông tin đăng nhập không hợp lệ. Vui lòng sử dụng mã truy cập chiến thuật được cung cấp.');
     }
+  };
+
+  const handleFaceLogin = () => {
+    setIsFaceScannerOpen(true);
+  };
+
+  const handleQRLogin = () => {
+    setIsQRScannerOpen(true);
+  };
+
+  const onFaceVerifyComplete = (_?: Float32Array, matchedUsername?: string) => {
+    const finalUsername = matchedUsername || username;
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('username', finalUsername);
+    onLogin(finalUsername);
+    setIsFaceScannerOpen(false);
+  };
+
+  const onQRVerifyComplete = (matchedUsername: string) => {
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('username', matchedUsername);
+    onLogin(matchedUsername);
+    setIsQRScannerOpen(false);
   };
 
   return (
@@ -72,9 +99,35 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           )}
 
-          <button type="submit" className="w-full btn-primary py-4">
-            Initialize Session
-          </button>
+          <div className="space-y-3">
+            <button type="submit" className="w-full btn-primary py-4">
+              Initialize Session
+            </button>
+            
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-[#050505] px-2 text-zinc-600">Or Biometric</span></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                type="button"
+                onClick={handleFaceLogin}
+                className="flex items-center justify-center gap-2 py-3 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 rounded-sm text-blue-400 text-[10px] font-bold uppercase tracking-widest transition-all"
+              >
+                <ScanFace className="w-4 h-4" />
+                Face ID
+              </button>
+              <button 
+                type="button"
+                onClick={handleQRLogin}
+                className="flex items-center justify-center gap-2 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 rounded-sm text-emerald-400 text-[10px] font-bold uppercase tracking-widest transition-all"
+              >
+                <QrCode className="w-4 h-4" />
+                QR Code
+              </button>
+            </div>
+          </div>
         </form>
 
         <div className="pt-4 border-t border-white/5 text-center">
@@ -83,6 +136,22 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </p>
         </div>
       </div>
+
+      {isFaceScannerOpen && (
+        <FaceScanner 
+          mode="verify"
+          username={username}
+          onComplete={onFaceVerifyComplete}
+          onCancel={() => setIsFaceScannerOpen(false)}
+        />
+      )}
+
+      {isQRScannerOpen && (
+        <QRScanner 
+          onComplete={onQRVerifyComplete}
+          onCancel={() => setIsQRScannerOpen(false)}
+        />
+      )}
     </div>
   );
 };

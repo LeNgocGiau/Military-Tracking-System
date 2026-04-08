@@ -442,8 +442,8 @@ export const MilitaryDetector: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-xl font-bold uppercase tracking-widest text-white">Awaiting Tactical Feed</p>
-                <p className="text-xs font-mono text-zinc-500 uppercase">Drop imagery or select source to begin analysis</p>
+                <p className="text-xl font-bold uppercase tracking-widest text-white">Đang chờ nguồn cấp dữ liệu chiến thuật</p>
+                <p className="text-xs font-mono text-zinc-500 uppercase">Thả hình ảnh hoặc chọn nguồn để bắt đầu phân tích</p>
               </div>
               <button 
                 onClick={() => fileInputRef.current?.click()}

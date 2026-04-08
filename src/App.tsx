@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MilitaryDetector } from './components/MilitaryDetector';
 import { Login } from './components/Login';
-import { Shield, Info, Globe, LogOut, User, Upload, Camera, Settings, X, Check } from 'lucide-react';
+import { Shield, Info, Globe, LogOut, User, Upload, Camera, Settings, X, Check, ScanFace, QrCode, Download, RefreshCw } from 'lucide-react';
+import { FaceScanner } from './components/FaceScanner';
+import { FaceAuthService } from './services/FaceAuthService';
+import { QRAuthService } from './services/QRAuthService';
+import { QRCodeSVG } from 'qrcode.react';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -9,6 +13,9 @@ const App: React.FC = () => {
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isFaceEnrollOpen, setIsFaceEnrollOpen] = useState(false);
+  const [hasFaceData, setHasFaceData] = useState(false);
+  const [qrToken, setQrToken] = useState<string | null>(null);
   
   // Profile edit states
   const [tempUsername, setTempUsername] = useState('');
@@ -23,6 +30,8 @@ const App: React.FC = () => {
       setIsLoggedIn(true);
       setUsername(storedUser);
       setUserPhoto(storedPhoto);
+      setHasFaceData(!!FaceAuthService.getStoredDescriptor(storedUser));
+      setQrToken(QRAuthService.getStoredToken(storedUser));
     }
   }, []);
 
@@ -31,6 +40,8 @@ const App: React.FC = () => {
     setUsername(user);
     const storedPhoto = localStorage.getItem('userPhoto');
     setUserPhoto(storedPhoto);
+    setHasFaceData(!!FaceAuthService.getStoredDescriptor(user));
+    setQrToken(QRAuthService.getStoredToken(user));
   };
 
   const handleLogout = () => {
@@ -61,6 +72,39 @@ const App: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const onFaceEnrollComplete = (descriptor?: Float32Array) => {
+    if (descriptor) {
+      FaceAuthService.saveFaceDescriptor(username, descriptor);
+      setHasFaceData(true);
+    }
+    setIsFaceEnrollOpen(false);
+  };
+
+  const handleGenerateQR = () => {
+    const newToken = QRAuthService.generateToken(username);
+    setQrToken(newToken);
+  };
+
+  const downloadQR = () => {
+    const svg = document.getElementById('operator-qr-code');
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx?.drawImage(img, 0, 0);
+      const pngFile = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `QR_Auth_${username}.png`;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
   };
 
   if (!isLoggedIn) {
@@ -208,6 +252,64 @@ const App: React.FC = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Biometric_Auth</label>
+                <button 
+                  onClick={() => setIsFaceEnrollOpen(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-sm hover:border-blue-500/50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <ScanFace className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-mono text-zinc-300">Face ID Setup</span>
+                  </div>
+                  <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${hasFaceData ? 'bg-emerald-500/10 text-emerald-500' : 'bg-zinc-800 text-zinc-500'}`}>
+                    {hasFaceData ? 'Active' : 'Not Set'}
+                  </span>
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">QR_Access_Token</label>
+                <div className="bg-zinc-900 border border-zinc-800 rounded-sm p-4 space-y-4">
+                  {qrToken ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="bg-white p-2 rounded-sm">
+                        <QRCodeSVG 
+                          id="operator-qr-code"
+                          value={qrToken} 
+                          size={128}
+                          level="H"
+                        />
+                      </div>
+                      <div className="flex gap-2 w-full">
+                        <button 
+                          onClick={handleGenerateQR}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold uppercase tracking-widest text-zinc-300 rounded-sm transition-all"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          Regenerate
+                        </button>
+                        <button 
+                          onClick={downloadQR}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-[10px] font-bold uppercase tracking-widest text-blue-400 border border-blue-500/30 rounded-sm transition-all"
+                        >
+                          <Download className="w-3 h-3" />
+                          Download
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={handleGenerateQR}
+                      className="w-full flex items-center justify-center gap-3 py-3 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 rounded-sm text-blue-400 text-xs font-bold uppercase tracking-widest transition-all"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      Generate Access QR
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button 
                   onClick={() => setIsProfileModalOpen(false)}
@@ -226,6 +328,15 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {isFaceEnrollOpen && (
+        <FaceScanner 
+          mode="enroll"
+          username={username}
+          onComplete={onFaceEnrollComplete}
+          onCancel={() => setIsFaceEnrollOpen(false)}
+        />
       )}
     </div>
   );

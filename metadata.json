@@ -1,6 +1,6 @@
 {
-  "name": "Military Recon Dashboard",
-  "description": "High-performance reconnaissance image analysis using OpenCV.js. Classical CV pipeline for real-time asset isolation and tactical analysis.",
-  "requestFramePermissions": [],
+  "name": "Military Vision AI",
+  "description": "Detect and classify military objects (tanks, warships, submarines, aircraft) in images using state-of-the-art AI.",
+  "requestFramePermissions": ["camera"],
   "prompt": ""
 }
