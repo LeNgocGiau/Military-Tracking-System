@@ -116,9 +116,15 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="h-16 border-b border-zinc-800 flex items-center justify-between px-6 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-            <Shield className="w-6 h-6 text-white" />
-          </div>
+          {userPhoto ? (
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-blue-500/50 shadow-lg shadow-blue-900/20">
+              <img src={userPhoto} alt="Operator" className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+          )}
           <div>
             <h1 className="font-bold text-lg leading-tight uppercase tracking-wider">Hệ thống theo dõi quân sự</h1>
             <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider">Advanced Tactical Detection</p>
